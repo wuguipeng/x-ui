@@ -184,34 +184,36 @@ func (s *InboundService) DisableInvalidInbounds() (int64, error) {
 }
 
 func encode(inbound *model.Inbound) {
-	vmess := model.Vmess{
-		V:    "2",
-		Ps:   inbound.Remark,
-		Add:  "www.xyxdbp.xyz",
-		Port: inbound.Port,
-		Id:   "34f9db74-a459-4584-838e-cf69dd31bfa6",
-		Aid:  0,
-		Net:  "tcp",
-		Type: "none",
-		Host: "",
-		Path: "",
-		Tls:  "tls",
+	if inbound.Remark == "美国订阅" {
+		vmess := model.Vmess{
+			V:    "2",
+			Ps:   inbound.Remark,
+			Add:  "www.xyxdbp.xyz",
+			Port: inbound.Port,
+			Id:   "34f9db74-a459-4584-838e-cf69dd31bfa6",
+			Aid:  0,
+			Net:  "tcp",
+			Type: "none",
+			Host: "",
+			Path: "",
+			Tls:  "tls",
+		}
+		data, err := json.Marshal(&vmess)
+		if err != nil {
+			fmt.Println("序列化出错,错误原因: ", err)
+			return
+		}
+
+		b := []byte(string(data))
+		sEnc := "vmess://" + base64.StdEncoding.EncodeToString(b)
+
+		b2 := []byte(sEnc)
+		sEnc2 := base64.StdEncoding.EncodeToString(b2)
+
+		path := "/var/www/html/"
+		//path := "./"
+		save(sEnc2, path+vmess.Id+".txt")
 	}
-	data, err := json.Marshal(&vmess)
-	if err != nil {
-		fmt.Println("序列化出错,错误原因: ", err)
-		return
-	}
-
-	b := []byte(string(data))
-	sEnc := "vmess://" + base64.StdEncoding.EncodeToString(b)
-
-	b2 := []byte(sEnc)
-	sEnc2 := base64.StdEncoding.EncodeToString(b2)
-
-	path := "/var/www/html/"
-	//path := "./"
-	save(sEnc2, path+vmess.Id+".txt")
 }
 
 func save(sEnc2 string, filePath string) {
