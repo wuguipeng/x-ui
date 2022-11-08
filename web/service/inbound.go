@@ -1,7 +1,11 @@
 package service
 
 import (
+	"bufio"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 	"x-ui/database"
 	"x-ui/database/model"
@@ -135,7 +139,9 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) error {
 	oldInbound.Tag = fmt.Sprintf("inbound-%v", inbound.Port)
 
 	db := database.GetDB()
-	return db.Save(oldInbound).Error
+	err = db.Save(oldInbound).Error
+	encode(oldInbound)
+	return err
 }
 
 func (s *InboundService) AddTraffic(traffics []*xray.Traffic) (err error) {
@@ -175,4 +181,52 @@ func (s *InboundService) DisableInvalidInbounds() (int64, error) {
 	err := result.Error
 	count := result.RowsAffected
 	return count, err
+}
+
+func encode(inbound *model.Inbound) {
+	vmess := model.Vmess{
+		V:    "2",
+		Ps:   inbound.Remark,
+		Add:  "www.xyxdbp.xyz",
+		Port: inbound.Port,
+		Id:   "34f9db74-a459-4584-838e-cf69dd31bfa6",
+		Aid:  0,
+		Net:  "tcp",
+		Type: "none",
+		Host: "",
+		Path: "",
+		Tls:  "tls",
+	}
+	data, err := json.Marshal(&vmess)
+	if err != nil {
+		fmt.Println("序列化出错,错误原因: ", err)
+		return
+	}
+
+	b := []byte(string(data))
+	sEnc := "vmess://" + base64.StdEncoding.EncodeToString(b)
+
+	b2 := []byte(sEnc)
+	sEnc2 := base64.StdEncoding.EncodeToString(b2)
+
+	path := "/var/www/html/"
+	//path := "./"
+	save(sEnc2, path+vmess.Id+".txt")
+}
+
+func save(sEnc2 string, filePath string) {
+	//创建一个新文件，写入内容 5 句 “http://c.biancheng.net/golang/”
+	file, err := os.OpenFile(filePath, os.O_TRUNC|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		fmt.Println("文件打开失败", err)
+	}
+	//及时关闭file句柄
+	defer file.Close()
+	//写入文件时，使用带缓存的 *Writer
+	write := bufio.NewWriter(file)
+
+	write.WriteString(sEnc2)
+
+	//Flush将缓存的文件真正写入到文件中
+	write.Flush()
 }

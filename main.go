@@ -299,4 +299,5 @@ func main() {
 		fmt.Println()
 		settingCmd.Usage()
 	}
+
 }
