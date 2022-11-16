@@ -12,6 +12,7 @@ import (
 	"x-ui/util/common"
 	"x-ui/xray"
 
+	"github.com/tidwall/gjson"
 	"gorm.io/gorm"
 )
 
@@ -184,36 +185,40 @@ func (s *InboundService) DisableInvalidInbounds() (int64, error) {
 }
 
 func encode(inbound *model.Inbound) {
-	if inbound.Remark == "美国订阅" {
-		vmess := model.Vmess{
-			V:    "2",
-			Ps:   inbound.Remark,
-			Add:  "www.xyxdbp.xyz",
-			Port: inbound.Port,
-			Id:   "34f9db74-a459-4584-838e-cf69dd31bfa6",
-			Aid:  0,
-			Net:  "tcp",
-			Type: "none",
-			Host: "",
-			Path: "",
-			Tls:  "tls",
-		}
-		data, err := json.Marshal(&vmess)
-		if err != nil {
-			fmt.Println("序列化出错,错误原因: ", err)
-			return
-		}
-
-		b := []byte(string(data))
-		sEnc := "vmess://" + base64.StdEncoding.EncodeToString(b)
-
-		b2 := []byte(sEnc)
-		sEnc2 := base64.StdEncoding.EncodeToString(b2)
-
-		path := "/var/www/html/"
-		//path := "./"
-		save(sEnc2, path+vmess.Id+".txt")
+	id := gjson.Get(inbound.Settings, "clients.0.id")
+	aid := gjson.Get(inbound.Settings, "clients.0.alterId")
+	net := gjson.Get(inbound.StreamSettings, "network")
+	tp := gjson.Get(inbound.StreamSettings, "tcpSettings.header.type")
+	tls := gjson.Get(inbound.StreamSettings, "security")
+	serverName := gjson.Get(inbound.StreamSettings, "tlsSettings.serverName")
+	vmess := model.Vmess{
+		V:    "2",
+		Ps:   inbound.Remark,
+		Add:  serverName.Str,
+		Port: inbound.Port,
+		Id:   id.Str,
+		Aid:  int(aid.Int()),
+		Net:  net.Str,
+		Type: tp.Str,
+		Host: "",
+		Path: "",
+		Tls:  tls.Str,
 	}
+	data, err := json.Marshal(&vmess)
+	if err != nil {
+		fmt.Println("序列化出错,错误原因: ", err)
+		return
+	}
+
+	b := []byte(string(data))
+	sEnc := "vmess://" + base64.StdEncoding.EncodeToString(b)
+
+	b2 := []byte(sEnc)
+	sEnc2 := base64.StdEncoding.EncodeToString(b2)
+
+	path := "/var/www/html/"
+	//path := "./"
+	save(sEnc2, path+vmess.Id+".txt")
 }
 
 func save(sEnc2 string, filePath string) {
