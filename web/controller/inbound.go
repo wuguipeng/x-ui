@@ -48,6 +48,7 @@ func (a *InboundController) startTask() {
 func (a *InboundController) getInbounds(c *gin.Context) {
 	user := session.GetLoginUser(c)
 	inbounds, err := a.inboundService.GetInbounds(user.Id)
+    logger.Info("user.ID = {}", user.Id)
 	if err != nil {
 		jsonMsg(c, "获取", err)
 		return

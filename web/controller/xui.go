@@ -7,6 +7,7 @@ import (
 type XUIController struct {
 	BaseController
 
+    subscribeController *SubscribeController
 	inboundController *InboundController
 	settingController *SettingController
 }
@@ -19,6 +20,8 @@ func NewXUIController(g *gin.RouterGroup) *XUIController {
 
 func (a *XUIController) initRouter(g *gin.RouterGroup) {
 	g = g.Group("/xui")
+    a.subscribeController = NewSubscribeController(g)
+
 	g.Use(a.checkLogin)
 
 	g.GET("/", a.index)

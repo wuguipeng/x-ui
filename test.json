@@ -1,0 +1,13 @@
+{
+    "v": "2",
+    "ps": "测试1",
+    "add": "oracle.xyxdbp.xyz",
+    "port": 38095,
+    "id": "15a2696e-c1dd-4702-a21b-4a499d69628f",
+    "aid": 0,
+    "net": "tcp",
+    "type": "none",
+    "host": "",
+    "path": "",
+    "tls": "none"
+}
