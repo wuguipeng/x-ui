@@ -57,7 +57,6 @@ func (s *SubscribeService) Publish() string {
 		text = text + sEnc + "\n"
 	}
 	text = base64.StdEncoding.EncodeToString([]byte(text))
-	logger.Info(text)
 	return text
 }
 

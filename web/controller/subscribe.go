@@ -18,7 +18,7 @@ func NewSubscribeController(g *gin.RouterGroup) *SubscribeController {
 
 func (a *SubscribeController) initRouter(g *gin.RouterGroup) {
     g = g.Group("/subscribe")
-    g.GET("/update",a.subscribe)
+    g.GET("/v2",a.subscribe)
 
 }
 
