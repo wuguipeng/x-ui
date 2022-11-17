@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/tidwall/gjson"
-	"net"
+	"io/ioutil"
+	"net/http"
 	"time"
 	"x-ui/database"
 	"x-ui/database/model"
@@ -22,9 +23,7 @@ func (s *SubscribeService) Publish() string {
 
 	// 扫描端口
 	for _, inbound1 := range inbounds {
-		b := scanPort(gjson.Get(inbound1.StreamSettings, "network").Str,
-			gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str,
-			inbound1.Port)
+		b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
 		if !b {
 			updatePort(inbound1)
 		}
@@ -67,14 +66,54 @@ func updatePort(inbound *model.Inbound) {
 	}
 }
 
-func scanPort(network string, ip string, port int) bool {
-	conn, _ := net.DialTimeout(network, fmt.Sprintf("%s:%d", ip, port), time.Millisecond*time.Duration(500))
-	if conn != nil {
-		err := conn.Close()
-		if err != nil {
-			panic(err)
-		}
-		return true
+//func scanPort(network string, ip string, port int) bool {
+//	conn, _ := net.DialTimeout(network, fmt.Sprintf("%s:%d", ip, port), time.Millisecond*time.Duration(500))
+//	if conn != nil {
+//		err := conn.Close()
+//		if err != nil {
+//			panic(err)
+//		}
+//		return true
+//	}
+//	return false
+//}
+func scanPort(ip string, port int) bool {
+	resp, err := GetHttp(fmt.Sprintf("https://duankou.wlphp.com/api.php?i=%s&p=%d", ip, port))
+	if err != nil {
+		fmt.Println(err)
 	}
-	return false
+	status := gjson.Get(string(resp), "msg.status")
+	if status.Str == "Openning" {
+		return true
+	} else {
+		return false
+	}
+}
+
+func GetHttp(url string) (body []byte, err error) {
+
+	// 创建 client 和 resp 对象
+	var client http.Client
+	var resp *http.Response
+
+	// 这里博主设置了10秒钟的超时
+	client = http.Client{Timeout: 10 * time.Second}
+
+	// 这里使用了 Get 方法，并判断异常
+	resp, err = client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	// 释放对象
+	defer resp.Body.Close()
+
+	// 把获取到的页面作为返回值返回
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	// 释放对象
+	defer client.CloseIdleConnections()
+
+	return body, nil
 }
