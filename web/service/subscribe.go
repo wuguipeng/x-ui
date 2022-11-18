@@ -24,12 +24,12 @@ func (s *SubscribeService) Publish() string {
 	db.Model(model.Inbound{}).Where("user_id = 1 and enable = 1").Find(&inbounds)
 
 	// 扫描端口
-	// for _, inbound1 := range inbounds {
-	// 	b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
-	// 	if !b {
-	// 		updatePort(inbound1)
-	// 	}
-	// }
+	for _, inbound1 := range inbounds {
+		b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
+		if !b {
+			updatePort(inbound1)
+		}
+	}
 	// 创建订阅
 	var text string
 	for _, inbound2 := range inbounds {
