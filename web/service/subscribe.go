@@ -4,16 +4,18 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/http"
 	"time"
 	"x-ui/database"
 	"x-ui/database/model"
+
+	"github.com/tidwall/gjson"
 )
 
 type SubscribeService struct {
 	inboundService InboundService
+	xrayService    XrayService
 }
 
 func (s *SubscribeService) Publish() string {
@@ -22,19 +24,20 @@ func (s *SubscribeService) Publish() string {
 	db.Model(model.Inbound{}).Where("user_id = 1 and enable = 1").Find(&inbounds)
 
 	// 扫描端口
-	for _, inbound1 := range inbounds {
-		b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
-		if !b {
-			updatePort(inbound1)
-		}
-	}
+	// for _, inbound1 := range inbounds {
+	// 	b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
+	// 	if !b {
+	// 		updatePort(inbound1)
+	// 	}
+	// }
 	// 创建订阅
 	var text string
 	for _, inbound2 := range inbounds {
 		vmess := model.Vmess{
-			V:    "2",
-			Ps:   inbound2.Remark,
-			Add:  gjson.Get(inbound2.StreamSettings, "tlsSettings.serverName").Str,
+			V:  "2",
+			Ps: inbound2.Remark,
+			// Add:  gjson.Get(inbound2.StreamSettings, "tlsSettings.serverName").Str,
+			Add:  "hk.wocc.cf",
 			Port: inbound2.Port,
 			Id:   gjson.Get(inbound2.Settings, "clients.0.id").Str,
 			Aid:  int(gjson.Get(inbound2.Settings, "clients.0.alterId").Int()),
@@ -61,8 +64,9 @@ func updatePort(inbound *model.Inbound) {
 	inbound.Port = inbound.Port + 1
 	service := InboundService{}
 	err := service.UpdateInbound(inbound)
-	if err != nil {
-		return
+	if err == nil {
+		xrayService := XrayService{}
+		xrayService.SetToNeedRestart()
 	}
 }
 
