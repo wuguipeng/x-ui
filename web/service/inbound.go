@@ -9,7 +9,7 @@ import (
 	"time"
 	"x-ui/database"
 	"x-ui/database/model"
-    "x-ui/util/common"
+	"x-ui/util/common"
 	"x-ui/xray"
 
 	"github.com/tidwall/gjson"
@@ -62,8 +62,7 @@ func (s *InboundService) AddInbound(inbound *model.Inbound) error {
 		return common.NewError("端口已存在:", inbound.Port)
 	}
 	db := database.GetDB()
-    err1 := db.Save(inbound).Error
-//    encode(inbound)
+	err1 := db.Save(inbound).Error
 	return err1
 }
 
@@ -143,7 +142,7 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) error {
 
 	db := database.GetDB()
 	err = db.Save(oldInbound).Error
-//	encode(oldInbound)
+	//	encode(oldInbound)
 	return err
 }
 
@@ -212,7 +211,6 @@ func encode(inbound *model.Inbound) {
 		return
 	}
 
-
 	b := []byte(string(data))
 	sEnc := "vmess://" + base64.StdEncoding.EncodeToString(b)
 
@@ -220,7 +218,7 @@ func encode(inbound *model.Inbound) {
 	sEnc2 := base64.StdEncoding.EncodeToString(b2)
 
 	path := "/var/www/html/"
-//	path := "./"
+	//	path := "./"
 	save(sEnc2, path+vmess.Id+".txt")
 }
 
@@ -240,4 +238,3 @@ func save(sEnc2 string, filePath string) {
 	//Flush将缓存的文件真正写入到文件中
 	write.Flush()
 }
-

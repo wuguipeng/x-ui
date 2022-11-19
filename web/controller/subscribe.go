@@ -33,5 +33,9 @@ func (a *SubscribeController) vmess(c *gin.Context) {
 }
 
 func (a *SubscribeController) clash(c *gin.Context) {
-
+    text := a.subscribeService.Clash()
+    _, err := c.Writer.WriteString(text)
+    if err != nil {
+        logger.Debug("返回失败")
+    }
 }

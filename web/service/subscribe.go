@@ -26,10 +26,10 @@ func (s *SubscribeService) Publish() string {
 
 	// 扫描端口
 	for _, inbound1 := range inbounds {
-		b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
-		if !b {
-			updatePort(inbound1)
-		}
+		//b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
+		//if !b {
+		updatePort(inbound1)
+		//}
 	}
 	// 创建订阅
 	var text string
