@@ -34,10 +34,10 @@ func (s *SubscribeService) Publish() string {
 	var text string
 	for _, inbound2 := range inbounds {
 		vmess := model.Vmess{
-			V:  "2",
-			Ps: inbound2.Remark,
-			// Add:  gjson.Get(inbound2.StreamSettings, "tlsSettings.serverName").Str,
-			Add:  "hk.wocc.cf",
+			V:   "2",
+			Ps:  inbound2.Remark,
+			Add: gjson.Get(inbound2.StreamSettings, "tlsSettings.serverName").Str,
+			//Add:  "hk.wocc.cf",
 			Port: inbound2.Port,
 			Id:   gjson.Get(inbound2.Settings, "clients.0.id").Str,
 			Aid:  int(gjson.Get(inbound2.Settings, "clients.0.alterId").Int()),
