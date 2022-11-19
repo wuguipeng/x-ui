@@ -10,6 +10,7 @@ import (
 	"x-ui/database"
 	"x-ui/database/model"
 	"x-ui/util/common"
+	"x-ui/util/firewall"
 	"x-ui/xray"
 
 	"github.com/tidwall/gjson"
@@ -63,6 +64,7 @@ func (s *InboundService) AddInbound(inbound *model.Inbound) error {
 	}
 	db := database.GetDB()
 	err1 := db.Save(inbound).Error
+	firewall.Open(inbound.Port)
 	return err1
 }
 
@@ -143,6 +145,7 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) error {
 	db := database.GetDB()
 	err = db.Save(oldInbound).Error
 	//	encode(oldInbound)
+	firewall.Open(inbound.Port)
 	return err
 }
 

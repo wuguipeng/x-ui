@@ -26,13 +26,13 @@ func (s *SubscribeService) Publish() string {
 
 	// 扫描端口
 	for _, inbound1 := range inbounds {
-		//b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
-		//if !b {
-		updatePort(inbound1)
-		//}
+		b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
+		if !b {
+			updatePort(inbound1)
+		}
 	}
 	// 创建订阅
-	var text string
+	text := ""
 	for _, inbound2 := range inbounds {
 		if inbound2.Protocol != vmess_type {
 			continue
@@ -50,14 +50,16 @@ func (s *SubscribeService) Publish() string {
 			Path: "",
 			Tls:  gjson.Get(inbound2.StreamSettings, "security").Str,
 		}
-		data, err := json.Marshal(&vmess)
+		data, err := json.MarshalIndent(vmess, "", "\t")
 		if err != nil {
 			fmt.Println("序列化出错,错误原因: ", err)
 			return ""
 		}
-
-		sEnc := vmess_type + "://" + base64.StdEncoding.EncodeToString([]byte(string(data)))
-		text = text + sEnc + "\n"
+		if text != "" {
+			text += "\n"
+		}
+		sEnc := vmess_type + "://" + base64.URLEncoding.EncodeToString(data)
+		text = text + sEnc
 	}
 	return text
 }
@@ -83,8 +85,9 @@ func updatePort(inbound *model.Inbound) {
 
 // vmess 转clash订阅
 func vmessToClash(url string) string {
-	body, err := http.GetHttp(fmt.Sprintf("http://192.168.31.104:25500/sub?target=clash&new_name=true&url=%s", url))
+	body, err := http.GetHttp(fmt.Sprintf("http://wocc.cf:25500/sub?target=clash&new_name=true&url=%s", url))
 	if err != nil {
+		fmt.Println(err)
 		fmt.Println("请求错误")
 	}
 	return string(body)
