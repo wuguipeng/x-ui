@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/base64"
 	"github.com/gin-gonic/gin"
 	"x-ui/logger"
 	"x-ui/web/service"
@@ -11,21 +12,26 @@ type SubscribeController struct {
 }
 
 func NewSubscribeController(g *gin.RouterGroup) *SubscribeController {
-    a := &SubscribeController{}
+	a := &SubscribeController{}
 	a.initRouter(g)
 	return a
 }
 
 func (a *SubscribeController) initRouter(g *gin.RouterGroup) {
-    g = g.Group("/subscribe")
-    g.GET("/v2",a.subscribe)
-
+	g = g.Group("/subscribe")
+	g.GET("/v2", a.vmess)
+	g.GET("/clash", a.clash)
 }
 
-func (a *SubscribeController) subscribe(c *gin.Context){
-    text := a.subscribeService.Publish()
-    _, err := c.Writer.WriteString(text)
-    if err != nil {
-        logger.Debug("返回失败")
-    }
+func (a *SubscribeController) vmess(c *gin.Context) {
+	text := a.subscribeService.Publish()
+	// 再次编码，返回
+	_, err := c.Writer.WriteString(base64.StdEncoding.EncodeToString([]byte(text)))
+	if err != nil {
+		logger.Debug("返回失败")
+	}
+}
+
+func (a *SubscribeController) clash(c *gin.Context) {
+
 }
