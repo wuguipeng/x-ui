@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"x-ui/database"
 	"x-ui/database/model"
+	"x-ui/logger"
 	"x-ui/util/firewall"
 	"x-ui/util/http"
 
@@ -18,6 +19,12 @@ type SubscribeService struct {
 }
 
 const vmess_type = "vmess"
+
+const telegramBotApi = "https://api.telegram.org/bot5471229987:AAFhn7cwh-KX2brKtF868z4TdLfmrcISmGY/sendMessage?chat_id=2141370676&text="
+
+const subconverterUrl = "https://sub.id9.cc/sub?target=clash&new_name=true&url="
+
+const scanPortApi = "https://duankou.wlphp.com/api.php"
 
 func (s *SubscribeService) Publish() string {
 	db := database.GetDB()
@@ -81,11 +88,15 @@ func updatePort(inbound *model.Inbound) {
 	// 开放和关闭防火墙
 	firewall.Open(inbound.Port)
 	firewall.Close(oldPort)
+	_, err1 := http.GetHttp(telegramBotApi + fmt.Sprintf("端口已更新端，新端口为%d, 关闭超时端口%d", inbound.Port, oldPort))
+	if err1 != nil {
+		logger.Error("电报消息发送失败")
+	}
 }
 
 // vmess 转clash订阅
 func vmessToClash(url string) string {
-	body, err := http.GetHttp(fmt.Sprintf("http://wocc.cf:25500/sub?target=clash&new_name=true&url=%s", url))
+	body, err := http.GetHttp(subconverterUrl + url)
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("请求错误")
@@ -95,7 +106,7 @@ func vmessToClash(url string) string {
 
 // 端口扫描
 func scanPort(ip string, port int) bool {
-	resp, err := http.GetHttp(fmt.Sprintf("https://duankou.wlphp.com/api.php?i=%s&p=%d", ip, port))
+	resp, err := http.GetHttp(scanPortApi + fmt.Sprintf("?i=%s&p=%d", ip, port))
 	if err != nil {
 		fmt.Println(err)
 	}
