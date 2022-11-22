@@ -26,12 +26,14 @@ func (a *SubscribeController) initRouter(g *gin.RouterGroup) {
 }
 
 func (a *SubscribeController) vmess(c *gin.Context) {
-	text, _, _ := a.subscribeService.Publish()
+	text, newPort, oldPort := a.subscribeService.Publish()
 	// 再次编码，返回
 	_, err := c.Writer.WriteString(base64.StdEncoding.EncodeToString([]byte(text)))
 	if err != nil {
 		logger.Debug("返回失败")
+		return
 	}
+	job.NewStatsNotifyJob().UpdatePortNotify(newPort, oldPort, "v2")
 }
 
 func (a *SubscribeController) clash(c *gin.Context) {
@@ -39,6 +41,7 @@ func (a *SubscribeController) clash(c *gin.Context) {
 	_, err := c.Writer.WriteString(text)
 	if err != nil {
 		logger.Debug("返回失败")
+		return
 	}
-	job.NewStatsNotifyJob().UpdatePortNotify(newPort, oldPort)
+	job.NewStatsNotifyJob().UpdatePortNotify(newPort, oldPort, "clash")
 }

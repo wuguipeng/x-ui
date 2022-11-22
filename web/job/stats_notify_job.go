@@ -137,7 +137,7 @@ func (j *StatsNotifyJob) UserLoginNotify(username string, ip string, time string
 	j.SendMsgToTgbot(msg)
 }
 
-func (j *StatsNotifyJob) UpdatePortNotify(port int, oldPort int) {
+func (j *StatsNotifyJob) UpdatePortNotify(port int, oldPort int, url string) {
 	name, err := os.Hostname()
 	if err != nil {
 		fmt.Println("get hostname error:", err)
@@ -154,5 +154,7 @@ func (j *StatsNotifyJob) UpdatePortNotify(port int, oldPort int) {
 		msg += fmt.Sprintf("关闭超时端口:%d\r\n", oldPort)
 	}
 	msg += fmt.Sprintf("时间:%s\r\n", time.Now().Format("2006-01-02 15:04:05"))
+	msg += fmt.Sprintf("订阅地址:%s", url)
+
 	j.SendMsgToTgbot(msg)
 }
