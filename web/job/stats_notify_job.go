@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
-
 	"time"
-
 	"x-ui/logger"
 	"x-ui/util/common"
 	"x-ui/web/service"
@@ -136,5 +134,25 @@ func (j *StatsNotifyJob) UserLoginNotify(username string, ip string, time string
 	msg += fmt.Sprintf("时间:%s\r\n", time)
 	msg += fmt.Sprintf("用户:%s\r\n", username)
 	msg += fmt.Sprintf("IP:%s\r\n", ip)
+	j.SendMsgToTgbot(msg)
+}
+
+func (j *StatsNotifyJob) UpdatePortNotify(port int, oldPort int) {
+	name, err := os.Hostname()
+	if err != nil {
+		fmt.Println("get hostname error:", err)
+		return
+	}
+	var msg string
+	if port == 0 || oldPort == 0 {
+		msg = fmt.Sprintf("端口正常，无需更新\r\n主机名称:%s\r\n", name)
+	} else if port == 1 || oldPort == 1 {
+		msg = fmt.Sprintf("端口更新提醒，端口更新失败\r\n主机名称:%s\r\n", name)
+	} else {
+		msg = fmt.Sprintf("端口更新成功提醒\r\n主机名称:%s\r\n", name)
+		msg += fmt.Sprintf("新端口:%d\r\n", port)
+		msg += fmt.Sprintf("关闭超时端口:%d\r\n", oldPort)
+	}
+	msg += fmt.Sprintf("时间:%s\r\n", time.Now().Format("2006-01-02 15:04:05"))
 	j.SendMsgToTgbot(msg)
 }

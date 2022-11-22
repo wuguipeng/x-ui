@@ -31,28 +31,28 @@ func ec(cmd string) (*bytes.Buffer, error) {
 	return out, command.Run()
 }
 
-func Open(port int) {
+func Open(port int) int {
 	ubuntu_open_firewall_script := fmt.Sprintf(`iptables -I INPUT -s 0.0.0.0/0 -p tcp --dport %d -j ACCEPT`, port)
 	centos_open_firewall_script := fmt.Sprintf(`firewall-cmd --zone=public --add-port=%d/tcp --permanent`, port)
 	release := release()
 	if release == "ubuntu" {
 		_, err := ec(ubuntu_open_firewall_script)
 		if err != nil {
-			logger.Error(err)
 			logger.Error(fmt.Sprintf("端口%d开放失败", port))
-			logger.Error(ubuntu_open_firewall_script)
+			return 1
 		}
 	}
 	if release == "centos" {
 		_, err := ec(centos_open_firewall_script)
 		if err != nil {
 			logger.Error(fmt.Sprintf("端口%d开放失败", port))
-			logger.Error(centos_open_firewall_script)
+			return 1
 		}
 	}
+	return port
 }
 
-func Close(port int) {
+func Close(port int) int {
 	ubuntu_close_firewall_script := fmt.Sprintf(`iptables -I INPUT -p tcp --dport %d -j DROP`, port)
 	centos_close_firewall_script := fmt.Sprintf(`firewall-cmd --zone=public --remove-port=%d/tcp --permanent`, port)
 	release := release()
@@ -60,12 +60,16 @@ func Close(port int) {
 		_, err := ec(ubuntu_close_firewall_script)
 		if err != nil {
 			logger.Error(fmt.Sprintf("端口%d关闭失败", port))
+			return 0
+
 		}
 	}
 	if release == "centos" {
 		_, err := ec(centos_close_firewall_script)
 		if err != nil {
 			logger.Error(fmt.Sprintf("端口%d关闭失败", port))
+			return 0
 		}
 	}
+	return port
 }

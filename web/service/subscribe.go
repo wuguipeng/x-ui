@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"x-ui/database"
 	"x-ui/database/model"
-	"x-ui/logger"
 	"x-ui/util/firewall"
 	"x-ui/util/http"
 
@@ -20,22 +19,21 @@ type SubscribeService struct {
 
 const vmess_type = "vmess"
 
-const telegramBotApi = "https://api.telegram.org/bot5471229987:AAFhn7cwh-KX2brKtF868z4TdLfmrcISmGY/sendMessage?chat_id=2141370676&text="
-
 const subconverterUrl = "https://sub.id9.cc/sub?target=clash&new_name=true&url="
 
 const scanPortApi = "https://duankou.wlphp.com/api.php"
 
-func (s *SubscribeService) Publish() string {
+func (s *SubscribeService) Publish() (string, int, int) {
 	db := database.GetDB()
 	var inbounds []*model.Inbound
 	db.Model(model.Inbound{}).Where("user_id = 1 and enable = 1").Find(&inbounds)
 
 	// 扫描端口
+	var newPort, oldPort int
 	for _, inbound1 := range inbounds {
 		b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
 		if !b {
-			updatePort(inbound1)
+			newPort, oldPort = updatePort(inbound1)
 		}
 	}
 	// 创建订阅
@@ -60,7 +58,7 @@ func (s *SubscribeService) Publish() string {
 		data, err := json.MarshalIndent(vmess, "", "\t")
 		if err != nil {
 			fmt.Println("序列化出错,错误原因: ", err)
-			return ""
+			return "", 1, 1
 		}
 		if text != "" {
 			text += "\n"
@@ -68,15 +66,15 @@ func (s *SubscribeService) Publish() string {
 		sEnc := vmess_type + "://" + base64.URLEncoding.EncodeToString(data)
 		text = text + sEnc
 	}
-	return text
+	return text, newPort, oldPort
 }
 
-func (s *SubscribeService) Clash() string {
-	text := s.Publish()
-	return vmessToClash(text)
+func (s *SubscribeService) Clash() (string, int, int) {
+	text, newPort, oldPort := s.Publish()
+	return vmessToClash(text), newPort, oldPort
 }
 
-func updatePort(inbound *model.Inbound) {
+func updatePort(inbound *model.Inbound) (int, int) {
 	oldPort := inbound.Port
 	inbound.Port = inbound.Port + 1
 	service := InboundService{}
@@ -86,12 +84,7 @@ func updatePort(inbound *model.Inbound) {
 		xrayService.SetToNeedRestart()
 	}
 	// 开放和关闭防火墙
-	firewall.Open(inbound.Port)
-	firewall.Close(oldPort)
-	_, err1 := http.GetHttp(telegramBotApi + fmt.Sprintf("端口已更新端，新端口为%d, 关闭超时端口%d", inbound.Port, oldPort))
-	if err1 != nil {
-		logger.Error("电报消息发送失败")
-	}
+	return firewall.Open(inbound.Port), firewall.Close(oldPort)
 }
 
 // vmess 转clash订阅
