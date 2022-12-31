@@ -19,7 +19,7 @@ type SubscribeService struct {
 
 const vmess_type = "vmess"
 
-const subconverterUrl = "https://sub.id9.cc/sub?target=clash&new_name=true&url="
+const subconverterUrl = "http://64.27.1.249:25500/sub?target=clash&new_name=true&url="
 
 const scanPortApi = "https://duankou.wlphp.com/api.php"
 
@@ -30,12 +30,12 @@ func (s *SubscribeService) Publish() (string, int, int) {
 
 	// 扫描端口
 	var newPort, oldPort int
-	for _, inbound1 := range inbounds {
-		b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
-		if !b {
-			newPort, oldPort = updatePort(inbound1)
-		}
-	}
+	// for _, inbound1 := range inbounds {
+	// 	b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
+	// 	if !b {
+	// 		newPort, oldPort = updatePort(inbound1)
+	// 	}
+	// }
 	// 创建订阅
 	text := ""
 	for _, inbound2 := range inbounds {
@@ -89,7 +89,7 @@ func updatePort(inbound *model.Inbound) (int, int) {
 
 // vmess 转clash订阅
 func vmessToClash(url string) string {
-	body, err := http.GetHttp(subconverterUrl + url)
+	body, err := http.GetHttp(subconverterUrl + url + "%3D%3D&insert=false&config=https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online_Full.ini")
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("请求错误")
