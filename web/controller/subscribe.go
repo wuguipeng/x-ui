@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/base64"
 	"x-ui/logger"
-	"x-ui/web/job"
 	"x-ui/web/service"
 
 	"github.com/gin-gonic/gin"
@@ -26,22 +25,20 @@ func (a *SubscribeController) initRouter(g *gin.RouterGroup) {
 }
 
 func (a *SubscribeController) vmess(c *gin.Context) {
-	text, newPort, oldPort := a.subscribeService.Publish()
+	text := a.subscribeService.Publish()
 	// 再次编码，返回
 	_, err := c.Writer.WriteString(base64.StdEncoding.EncodeToString([]byte(text)))
 	if err != nil {
 		logger.Debug("返回失败")
 		return
 	}
-	job.NewStatsNotifyJob().UpdatePortNotify(newPort, oldPort, "v2")
 }
 
 func (a *SubscribeController) clash(c *gin.Context) {
-	text, newPort, oldPort := a.subscribeService.Clash()
+	text := a.subscribeService.Clash()
 	_, err := c.Writer.WriteString(text)
 	if err != nil {
 		logger.Debug("返回失败")
 		return
 	}
-	job.NewStatsNotifyJob().UpdatePortNotify(newPort, oldPort, "clash")
 }

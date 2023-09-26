@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"x-ui/database"
 	"x-ui/database/model"
+	"x-ui/util/firewall"
 	"x-ui/util/http"
 
 	"github.com/tidwall/gjson"
@@ -22,24 +23,23 @@ const subconverterUrl = "http://oracle.wocc.cf/sub?target=clash&new_name=true&ur
 
 const scanPortApi = "https://duankou.wlphp.com/api.php"
 
-func (s *SubscribeService) Publish() (string, int, int) {
+func (s *SubscribeService) Publish() string {
 	db := database.GetDB()
 	var inbounds []*model.Inbound
 	db.Model(model.Inbound{}).Where("user_id = 1 and enable = 1").Find(&inbounds)
 
-	// 扫描端口
-	var newPort, oldPort int
-	for _, inbound1 := range inbounds {
-		b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
-		if !b {
-		newPort, oldPort = updatePort(inbound1)
-	}
-	}
 	// 创建订阅
 	text := ""
 	for _, inbound2 := range inbounds {
 		if inbound2.Protocol != vmess_type {
 			continue
+		}
+
+		// 端口扫描
+		b := scanPort(gjson.Get(inbound2.StreamSettings, "tlsSettings.serverName").Str, inbound2.Port)
+		if !b {
+			// 更新端口
+			updatePort(inbound2)
 		}
 		vmess := model.Vmess{
 			V:    "2",
@@ -57,7 +57,7 @@ func (s *SubscribeService) Publish() (string, int, int) {
 		data, err := json.MarshalIndent(vmess, "", "\t")
 		if err != nil {
 			fmt.Println("序列化出错,错误原因: ", err)
-			return "", 1, 1
+			return ""
 		}
 		if text != "" {
 			text += "\n"
@@ -65,12 +65,12 @@ func (s *SubscribeService) Publish() (string, int, int) {
 		sEnc := vmess_type + "://" + base64.URLEncoding.EncodeToString(data)
 		text = text + sEnc
 	}
-	return text, newPort, oldPort
+	return text
 }
 
-func (s *SubscribeService) Clash() (string, int, int) {
-	text, newPort, oldPort := s.Publish()
-	return vmessToClash(text), newPort, oldPort
+func (s *SubscribeService) Clash() string {
+	text := s.Publish()
+	return vmessToClash(text)
 }
 
 func updatePort(inbound *model.Inbound) (int, int) {
@@ -82,7 +82,7 @@ func updatePort(inbound *model.Inbound) (int, int) {
 		xrayService := XrayService{}
 		xrayService.SetToNeedRestart()
 	}
-	return inbound.Port, oldPort
+	return firewall.Open(inbound.Port), firewall.Close(oldPort)
 }
 
 // vmess 转clash订阅
