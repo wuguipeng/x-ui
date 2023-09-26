@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"x-ui/database"
 	"x-ui/database/model"
-	"x-ui/util/firewall"
 	"x-ui/util/http"
 
 	"github.com/tidwall/gjson"
@@ -19,7 +18,7 @@ type SubscribeService struct {
 
 const vmess_type = "vmess"
 
-const subconverterUrl = "http://64.27.1.249:25500/sub?target=clash&new_name=true&url="
+const subconverterUrl = "http://oracle.wocc.cf/sub?target=clash&new_name=true&url="
 
 const scanPortApi = "https://duankou.wlphp.com/api.php"
 
@@ -30,12 +29,12 @@ func (s *SubscribeService) Publish() (string, int, int) {
 
 	// 扫描端口
 	var newPort, oldPort int
-	//for _, inbound1 := range inbounds {
-	//	b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
-	//	if !b {
-	//		newPort, oldPort = updatePort(inbound1)
-	//	}
-	//}
+	for _, inbound1 := range inbounds {
+		b := scanPort(gjson.Get(inbound1.StreamSettings, "tlsSettings.serverName").Str, inbound1.Port)
+		if !b {
+		newPort, oldPort = updatePort(inbound1)
+	}
+	}
 	// 创建订阅
 	text := ""
 	for _, inbound2 := range inbounds {
@@ -83,13 +82,12 @@ func updatePort(inbound *model.Inbound) (int, int) {
 		xrayService := XrayService{}
 		xrayService.SetToNeedRestart()
 	}
-	// 开放和关闭防火墙
-	return firewall.Open(inbound.Port), firewall.Close(oldPort)
+	return inbound.Port, oldPort
 }
 
 // vmess 转clash订阅
 func vmessToClash(url string) string {
-	body, err := http.GetHttp(subconverterUrl + url + "%3D%3D&insert=false&config=https%3A%2F%2Fraw.githubusercontent.com%2FACL4SSR%2FACL4SSR%2Fmaster%2FClash%2Fconfig%2FACL4SSR_Online_Full.ini")
+	body, err := http.GetHttp(subconverterUrl + url + "%3D%3D&insert=false&config=https%3A%2F%2Fraw.githubusercontent.com%2Fwuguipeng%2Fclash-rule%2Fmaster%2Fconfig%2FACL4SSR_Online.ini")
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println("请求错误")
